@@ -1,0 +1,336 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Data Application</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #343a40;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 1.5em 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+        }
+        section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            background-color: #ffffff;
+        }
+        h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        table, th, td {
+            border: 1px solid #dee2e6;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #e9ecef;
+            font-weight: bold;
+            color: #495057;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .error-message {
+            color: #dc3545;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+        }
+        .loading-message {
+            color: #17a2b8;
+            padding: 10px;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+        }
+        .status-success {
+            color: #28a745;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+        }
+        #csvDisplay {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        #csvDisplay p {
+            padding: 15px;
+            margin: 0;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            padding: 8px 0;
+            border-bottom: 1px dotted #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        ul li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            min-width: 80px;
+            text-align: right;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+        .status.checking { background-color: #ffc107; color: #343a40; }
+        .status.pass { background-color: #28a745; color: #ffffff; }
+        .status.fail { background-color: #dc3545; color: #ffffff; }
+        footer {
+            text-align: center;
+            padding: 1.5em 0;
+            margin-top: 40px;
+            color: #6c757d;
+            font-size: 0.85em;
+            border-top: 1px solid #e9ecef;
+            background-color: #f1f1f1;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            main {
+                margin: 15px;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Frontend Data Application</h1>
+    </header>
+    <main>
+        <section>
+            <h2>CSV Data Viewer</h2>
+            <div role="status" aria-live="polite" id="statusMessage" class="loading-message">Loading data...</div>
+            <div id="csvDisplay">
+                <p>CSV data will be loaded here.</p>
+            </div>
+            <p>
+                To load a different CSV, append <code>?url=your_csv_url.csv</code> to the browser's URL.
+                Example: <a href="?url=https://raw.githubusercontent.com/datasets/gdp/main/data/gdp.csv">Load external GDP data</a>
+                (Note: CORS policy might prevent loading from arbitrary URLs, especially from local file system directly.)
+            </p>
+        </section>
+        <section>
+            <h2>Repository Compliance Checks</h2>
+            <p>This application performs client-side checks for repository compliance as per the brief:</p>
+            <ul>
+                <li id="check-execute-py-exists"><code>execute.py</code> exists: <span class="status">Checking...</span></li>
+                <li id="check-data-csv-exists"><code>data.csv</code> exists: <span class="status">Checking...</span></li>
+                <li id="check-ci-yml-exists"><code>.github/workflows/ci.yml</code> exists: <span class="status">Checking...</span></li>
+                <li id="check-result-json-not-committed"><code>result.json</code> is NOT committed: <span class="status">Checking...</span></li>
+                <li id="check-execute-py-no-typo"><code>execute.py</code> does not contain "revenew": <span class="status">Checking...</span></li>
+                <li id="check-data-csv-content"><code>data.csv</code> content matches source: <span class="status">Checking...</span></li>
+                <li id="check-ci-yaml-steps">CI YAML has ruff, execute.py, and Pages deploy steps: <span class="status">Checking...</span></li>
+            </ul>
+            <p><em>Note: Checks for "GitHub Actions ran for this commit and logs show ruff + execute.py" and "result.json is published on GitHub Pages" must be verified manually in the repository's GitHub Actions tab and GitHub Pages site, respectively, as they cannot be fully validated client-side.</em></p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 Frontend Data App. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const defaultCsvUrl = './input/data.csv';
+            const urlParams = new URLSearchParams(window.location.search);
+            const customCsvUrl = urlParams.get('url');
+            const csvUrlToLoad = customCsvUrl || defaultCsvUrl;
+
+            const statusMessage = document.getElementById('statusMessage');
+            const csvDisplay = document.getElementById('csvDisplay');
+
+            function displayCsvData(data) {
+                if (!data || data.length === 0) {
+                    csvDisplay.innerHTML = '<p>No data to display.</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                const thead = document.createElement('thead');
+                const tbody = document.createElement('tbody');
+
+                // PapaParse with `transformHeader` already lowercases headers.
+                const headers = Object.keys(data[0]); 
+                const headerRow = document.createElement('tr');
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Body rows
+                data.forEach(rowData => {
+                    const tr = document.createElement('tr');
+                    headers.forEach(header => {
+                        const td = document.createElement('td');
+                        td.textContent = rowData[header]; 
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                csvDisplay.innerHTML = ''; // Clear previous content
+                csvDisplay.appendChild(table);
+                statusMessage.textContent = `Successfully loaded data from ${csvUrlToLoad}`;
+                statusMessage.className = 'status-success';
+            }
+
+            PapaParse.parse(csvUrlToLoad, {
+                download: true,
+                header: true, // Treat first row as headers
+                skipEmptyLines: true,
+                transformHeader: header => header.toLowerCase(), // Lowercase all headers dynamically
+                complete: (results) => {
+                    if (results.errors.length) {
+                        console.error('CSV Parsing Errors:', results.errors);
+                        statusMessage.textContent = `Error loading CSV: ${results.errors[0].message}`;
+                        statusMessage.className = 'error-message';
+                        csvDisplay.innerHTML = `<p class="error-message">Failed to load CSV from ${csvUrlToLoad}. Please check the URL and try again. Error: ${results.errors[0].message}</p>`;
+                    } else if (!results.data || results.data.length === 0) {
+                        statusMessage.textContent = `No data found in CSV from ${csvUrlToLoad}.`;
+                        statusMessage.className = 'error-message';
+                        csvDisplay.innerHTML = `<p class="error-message">No data found in CSV from ${csvUrlToLoad}.</p>`;
+                    }
+                    else {
+                        displayCsvData(results.data);
+                    }
+                },
+                error: (error) => { // This callback is for network/download errors, not parsing errors
+                    console.error('Network or PapaParse Error:', error);
+                    statusMessage.textContent = `Error loading CSV: ${error.message}`;
+                    statusMessage.className = 'error-message';
+                    csvDisplay.innerHTML = `<p class="error-message">Failed to load CSV from ${csvUrlToLoad}. Network error or file not found. Please ensure the path is correct.</p>`;
+                }
+            });
+
+            // --- Implement DOM Checks ---
+            const checkElements = {
+                'check-execute-py-exists': { url: './input/execute.py', validator: (content) => content.length > 0 },
+                'check-data-csv-exists': { url: './input/data.csv', validator: (content) => content.length > 0 },
+                'check-ci-yml-exists': { url: './.github/workflows/ci.yml', validator: (content) => content.length > 0 },
+                'check-result-json-not-committed': { url: './result.json', validator: (content) => !content, expectedStatus: 404 }, // Expect 404
+                'check-execute-py-no-typo': { url: './input/execute.py', validator: (content) => !content.includes('revenew') },
+                'check-data-csv-content': { url: './input/data.csv', validator: (content) => {
+                    // This content MUST match the data.xlsx excerpt exactly after CSV conversion.
+                    const expectedContent = `ID,Product,Category,Price,Quantity,Revenue\n1,Laptop,Electronics,1200,10,12000\n2,Mouse,Electronics,25,50,1250\n3,Keyboard,Electronics,75,20,1500\n4,Monitor,Electronics,300,15,4500\n5,Desk Chair,Furniture,150,5,750\n6,Office Desk,Furniture,400,3,1200\n7,Notebook,Stationery,5,100,500\n8,Pen Set,Stationery,10,20,200`;
+                    return content.trim() === expectedContent.trim();
+                }},
+                'check-ci-yaml-steps': { url: './.github/workflows/ci.yml', validator: (content) => {
+                    const ruffStep = content.includes('ruff check .');
+                    const executeStep = content.includes('python ./input/execute.py > result.json');
+                    const pagesSetup = content.includes('uses: actions/configure-pages@v5');
+                    const pagesUpload = content.includes('uses: actions/upload-pages-artifact@v4') && content.includes("path: 'result.json'");
+                    const pagesDeploy = content.includes('uses: actions/deploy-pages@v4');
+                    
+                    return ruffStep && executeStep && pagesSetup && pagesUpload && pagesDeploy;
+                }}
+            };
+
+            async function runChecks() {
+                for (const [id, config] of Object.entries(checkElements)) {
+                    const element = document.getElementById(id);
+                    const statusSpan = element.querySelector('.status');
+                    statusSpan.textContent = 'Checking...';
+                    statusSpan.className = 'status checking';
+
+                    try {
+                        const response = await fetch(config.url);
+                        if (config.expectedStatus && response.status === config.expectedStatus) {
+                            statusSpan.textContent = 'PASS';
+                            statusSpan.className = 'status pass';
+                        } else if (config.expectedStatus && response.status !== config.expectedStatus) {
+                             statusSpan.textContent = `FAIL (Expected ${config.expectedStatus}, got ${response.status})`;
+                             statusSpan.className = 'status fail';
+                        } else if (!response.ok) {
+                            statusSpan.textContent = `FAIL (Status: ${response.status})`;
+                            statusSpan.className = 'status fail';
+                        } else {
+                            const content = await response.text();
+                            if (config.validator(content)) {
+                                statusSpan.textContent = 'PASS';
+                                statusSpan.className = 'status pass';
+                            } else {
+                                statusSpan.textContent = 'FAIL';
+                                statusSpan.className = 'status fail';
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching ${config.url}:`, error);
+                        statusSpan.textContent = `FAIL (Error: ${error.message})`;
+                        statusSpan.className = 'status fail';
+                    }
+                }
+            }
+
+            runChecks();
+        });
+    </script>
+</body>
+</html>
+```
